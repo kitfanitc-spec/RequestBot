@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self';">
+    <title>Download Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="renderer.js" defer></script>
+</head>
+<body>
+    <main class="app">
+        <div class="window-drag-bar" role="separator" aria-label="Drag this bar to move the window">
+            <span>DRAG TO MOVE</span>
+        </div>
+        <header class="topbar">
+            <div class="window-drag-handle">
+                <p class="eyebrow">REQUEST BOT</p>
+                <h1>Downloads</h1>
+            </div>
+            <div class="topbar-actions">
+                <button id="tracker-refresh" class="refresh-button tracker-refresh" type="button">
+                    Update trackers
+                </button>
+                <button id="refresh" class="refresh-button" type="button" aria-label="Refresh download status">
+                    Refresh
+                </button>
+                <button id="settings-open" class="window-control settings-control" type="button" aria-label="Open settings" title="Settings">
+                    ⚙
+                </button>
+                <div class="window-controls" role="group" aria-label="Window controls">
+                    <button id="minimize-window" class="window-control" type="button" aria-label="Minimize window" title="Minimize">−</button>
+                    <button id="maximize-window" class="window-control" type="button" aria-label="Maximize window" title="Maximize">□</button>
+                    <button id="close-window" class="window-control close-control" type="button" aria-label="Hide window" title="Hide">×</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="mascot-card" id="mascot-card" data-state="working" aria-label="Your AI-style download assistant">
+            <div class="mascot" aria-hidden="true">
+                <div class="antenna"><span></span></div>
+                <div class="robot-head">
+                    <div class="robot-face">
+                        <div class="robot-eye"></div>
+                        <div class="robot-eye"></div>
+                        <div class="robot-mouth"></div>
+                    </div>
+                </div>
+                <div class="robot-body">
+                    <span class="robot-core"></span>
+                </div>
+                <span class="robot-arm robot-arm-left"></span>
+                <span class="robot-z robot-z-one">z</span>
+                <span class="robot-clock" aria-hidden="true"><span></span><i></i></span>
+                <span class="robot-shadow"></span>
+            </div>
+            <div class="mascot-copy">
+                <p class="eyebrow">YOUR MEDIA ASSISTANT</p>
+                <h2 id="greeting">Ready when you are.</h2>
+                <p id="summary">Checking Radarr and Sonarr...</p>
+                <span class="assistant-indicator"><span></span> <span id="assistant-state">Waking up</span></span>
+            </div>
+        </section>
+
+        <section class="activity-summary" aria-label="Download summary">
+            <article><strong id="active-count">—</strong><span>Active</span></article>
+            <article><strong id="stalled-count">—</strong><span>Stalled</span></article>
+            <article><strong id="seeding-count">—</strong><span>Seeding</span></article>
+            <article><strong id="completion-count">—</strong><span>Recent imports</span></article>
+        </section>
+
+        <section class="download-card media-sync-card" aria-labelledby="media-sync-title">
+            <div>
+                <h2 id="media-sync-title" class="download-title">Personal media sync</h2>
+            </div>
+            <p class="media-sync-help" data-media-sync-help>Choose and run separate scripts for TV and movies. Scripts stay on this computer and are not included in the installer.</p>
+            <div class="media-sync-list">
+                <section class="media-sync-item" data-media-sync="tv" aria-labelledby="media-sync-tv-title">
+                    <h3 id="media-sync-tv-title">TV shows</h3>
+                    <p class="media-sync-path" data-media-sync-path>No script selected.</p>
+                    <p class="media-sync-status" data-media-sync-status role="status" aria-live="polite">Checking status...</p>
+                    <div class="media-sync-actions">
+                        <button class="refresh-button" type="button" data-media-sync-action="choose">Choose script</button>
+                        <button class="refresh-button tracker-refresh" type="button" data-media-sync-action="start" disabled>Start</button>
+                        <button class="refresh-button danger-button" type="button" data-media-sync-action="stop" disabled>Stop</button>
+                    </div>
+                </section>
+                <section class="media-sync-item" data-media-sync="movies" aria-labelledby="media-sync-movies-title">
+                    <h3 id="media-sync-movies-title">Movies</h3>
+                    <p class="media-sync-path" data-media-sync-path>No script selected.</p>
+                    <p class="media-sync-status" data-media-sync-status role="status" aria-live="polite">Checking status...</p>
+                    <div class="media-sync-actions">
+                        <button class="refresh-button" type="button" data-media-sync-action="choose">Choose script</button>
+                        <button class="refresh-button tracker-refresh" type="button" data-media-sync-action="start" disabled>Start</button>
+                        <button class="refresh-button danger-button" type="button" data-media-sync-action="stop" disabled>Stop</button>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <details class="downloads-section" open>
+            <summary class="section-heading">
+                <div class="section-title">
+                    <span class="section-icon" aria-hidden="true">↓</span>
+                    <h2>Current activity</h2>
+                </div>
+                <span id="updated" class="updated"><span class="live-dot"></span> Waiting for update</span>
+            </summary>
+            <div class="section-content">
+                <div id="tracker-message" class="tracker-message" role="status" aria-live="polite" hidden></div>
+                <div id="errors" class="errors" role="status" hidden></div>
+                <div id="queue" class="queue" aria-live="polite">
+                    <p class="empty-state">Connecting to your media managers...</p>
+                </div>
+            </div>
+        </details>
+
+        <details class="downloads-section">
+            <summary class="section-heading">
+                <div class="section-title">
+                    <span class="section-icon attention-icon" aria-hidden="true">!</span>
+                    <h2>Needs attention</h2>
+                </div>
+            </summary>
+            <div class="section-content">
+                <div id="attention" class="history-list" aria-live="polite">
+                    <p class="empty-state">Checking for warnings and failures...</p>
+                </div>
+            </div>
+        </details>
+
+        <details class="downloads-section">
+            <summary class="section-heading">
+                <div class="section-title">
+                    <span class="section-icon complete-icon" aria-hidden="true">✓</span>
+                    <h2>Recent completions</h2>
+                </div>
+            </summary>
+            <div class="section-content">
+                <div id="completions" class="history-list compact-list" aria-live="polite">
+                    <p class="empty-state">Loading completion history...</p>
+                </div>
+            </div>
+        </details>
+
+        <details class="downloads-section">
+            <summary class="section-heading">
+                <div class="section-title">
+                    <span class="section-icon history-icon" aria-hidden="true">↺</span>
+                    <h2>Request history</h2>
+                </div>
+            </summary>
+            <div class="section-content">
+                <div class="history-controls">
+                    <input id="request-search" type="search" aria-label="Search request history" placeholder="Search title or requester">
+                    <select id="request-status-filter" aria-label="Filter requests by status">
+                        <option value="">All statuses</option>
+                    </select>
+                    <button id="export-history" class="refresh-button" type="button">Export CSV</button>
+                    <button id="clear-history" class="refresh-button danger-button" type="button">Clear history</button>
+                </div>
+                <div id="requests" class="history-list compact-list" aria-live="polite">
+                    <p class="empty-state">Loading requests...</p>
+                </div>
+            </div>
+        </details>
+
+        <footer>
+            <span class="footer-status"><span class="status-dot"></span> <span id="bot-status">Connecting...</span></span>
+            <span>Toggle with <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd></span>
+        </footer>
+    </main>
+
+    <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
+        <form id="settings-form">
+            <section id="welcome-view" class="welcome-view" aria-labelledby="welcome-title" hidden>
+                <div class="welcome-art" aria-hidden="true">
+                    <div class="welcome-orbit welcome-orbit-one"></div>
+                    <div class="welcome-orbit welcome-orbit-two"></div>
+                    <div class="welcome-bot">
+                        <span class="welcome-antenna"></span>
+                        <span class="welcome-bot-head"><i></i><b></b></span>
+                        <span class="welcome-bot-body"><i></i></span>
+                    </div>
+                </div>
+                <p class="eyebrow">WELCOME TO REQUEST BOT</p>
+                <h2 id="welcome-title">Your media, on its way.</h2>
+                <p class="welcome-copy">Request movies, shows, and anime from Discord. We’ll help you connect the services that make it work.</p>
+                <div class="welcome-steps">
+                    <div><span>1</span><p><strong>Connect your library</strong><small>Add Radarr and Sonarr.</small></p></div>
+                    <div><span>2</span><p><strong>Connect Discord</strong><small>Set up your request bot.</small></p></div>
+                    <div><span>3</span><p><strong>Pair downloads</strong><small>Optionally add a torrent client.</small></p></div>
+                </div>
+                <p class="welcome-note">Your credentials stay encrypted on this computer. You can change connections any time in Settings.</p>
+                <p id="welcome-message" class="settings-result" role="status" aria-live="polite"></p>
+                <div class="welcome-actions">
+                    <button id="welcome-later" class="welcome-later" type="button">Set up later</button>
+                    <button id="welcome-start" class="refresh-button welcome-start" type="button">Let’s get started <span aria-hidden="true">→</span></button>
+                </div>
+            </section>
+            <div id="settings-view" hidden>
+            <div class="settings-header">
+                <div>
+                    <p class="eyebrow">REQUEST BOT SETTINGS</p>
+                    <h2 id="settings-title">Connection settings</h2>
+                </div>
+                <button id="settings-close" class="window-control" type="button" aria-label="Close settings">×</button>
+            </div>
+            <p class="settings-intro">Add your service addresses and credentials. Secrets are saved encrypted on this computer.</p>
+            <button id="check-all-connections" class="refresh-button" type="button">Check all connections</button>
+            <p id="connection-check-summary" class="settings-result" role="status" aria-live="polite"></p>
+
+            <section class="settings-group">
+                <h3>Discord bot <span class="required-label">Required</span></h3>
+                <label>Bot token
+                    <input data-setting="DISCORD_TOKEN" type="password" autocomplete="new-password" placeholder="Paste your bot token" data-secret>
+                </label>
+                <div class="settings-field-row">
+                    <label>Application ID
+                        <input data-setting="CLIENT_ID" type="text" autocomplete="off" placeholder="Discord application ID">
+                    </label>
+                    <label>Server ID
+                        <input data-setting="GUILD_ID" type="text" autocomplete="off" placeholder="Discord server ID">
+                    </label>
+                </div>
+                <label>Request and download alert channel ID <span class="optional-label">Optional</span>
+                    <input data-setting="ALERT_CHANNEL_ID" type="text" autocomplete="off" placeholder="Discord text channel ID">
+                </label>
+                <p class="settings-help">Successful requests and completed downloads are posted here so everyone can see them. The bot needs permission to view the channel and send messages.</p>
+                <label>Allowed request channel IDs <span class="optional-label">Optional · comma-separated</span>
+                    <input data-setting="REQUEST_ALLOWED_CHANNEL_IDS" type="text" autocomplete="off" placeholder="Blank allows requests in any channel">
+                </label>
+                <p class="settings-help">When set, /request only works in the listed text channels. The empty default does not restrict channels.</p>
+                <label>Maximum active requests per user <span class="optional-label">Optional · disabled by default</span>
+                    <input data-setting="REQUEST_MAX_ACTIVE_PER_USER" type="number" min="1" max="9999" step="1" placeholder="No limit">
+                </label>
+                <button class="refresh-button settings-test" type="button" data-test="discord">Test Discord</button>
+                <p class="settings-result" data-result="discord" role="status"></p>
+            </section>
+
+            <section class="settings-group">
+                <h3>Radarr <span class="optional-label">Movies</span></h3>
+                <label>URL
+                    <input data-setting="RADARR_URL" type="url" autocomplete="url" placeholder="http://localhost:7878">
+                </label>
+                <label>API key
+                    <input data-setting="RADARR_API_KEY" type="password" autocomplete="new-password" placeholder="Paste your Radarr API key" data-secret>
+                </label>
+                <div class="settings-field-row">
+                    <label>Root folder <span class="optional-label">If multiple</span>
+                        <input data-setting="RADARR_ROOT_FOLDER" data-manager-option="rootFolder" list="radarr-roots" type="text" autocomplete="off" placeholder="/movies">
+                        <datalist id="radarr-roots"></datalist>
+                    </label>
+                    <label>Quality profile ID <span class="optional-label">If multiple</span>
+                        <input data-setting="RADARR_QUALITY_PROFILE_ID" data-manager-option="qualityProfile" list="radarr-profiles" type="text" autocomplete="off" placeholder="For example: 1">
+                        <datalist id="radarr-profiles"></datalist>
+                    </label>
+                </div>
+                <button class="refresh-button settings-test" type="button" data-load-options="radarr">Load folders &amp; profiles</button>
+                <p class="settings-result" data-options-result="radarr" role="status"></p>
+                <button class="refresh-button settings-test" type="button" data-test="radarr">Test Radarr</button>
+                <p class="settings-result" data-result="radarr" role="status"></p>
+            </section>
+
+            <section class="settings-group">
+                <h3>Sonarr <span class="optional-label">TV and anime</span></h3>
+                <label>URL
+                    <input data-setting="SONARR_URL" type="url" autocomplete="url" placeholder="http://localhost:8989">
+                </label>
+                <label>API key
+                    <input data-setting="SONARR_API_KEY" type="password" autocomplete="new-password" placeholder="Paste your Sonarr API key" data-secret>
+                </label>
+                <div class="settings-field-row">
+                    <label>Default root folder <span class="optional-label">If multiple</span>
+                        <input data-setting="SONARR_ROOT_FOLDER" data-manager-option="rootFolder" list="sonarr-roots" type="text" autocomplete="off" placeholder="/tv">
+                    </label>
+                    <label>Default quality profile ID <span class="optional-label">If multiple</span>
+                        <input data-setting="SONARR_QUALITY_PROFILE_ID" data-manager-option="qualityProfile" list="sonarr-profiles" type="text" autocomplete="off" placeholder="For example: 1">
+                    </label>
+                </div>
+                <datalist id="sonarr-roots"></datalist>
+                <datalist id="sonarr-profiles"></datalist>
+                <button class="refresh-button settings-test" type="button" data-load-options="sonarr">Load folders &amp; profiles</button>
+                <p class="settings-result" data-options-result="sonarr" role="status"></p>
+                <details class="settings-advanced">
+                    <summary>Optional TV and anime overrides</summary>
+                    <div class="settings-field-row">
+                        <label>TV root folder
+                            <input data-setting="SONARR_TV_ROOT_FOLDER" data-manager-option="rootFolder" list="sonarr-roots" type="text" autocomplete="off" placeholder="Use default if blank">
+                        </label>
+                        <label>TV quality profile ID
+                            <input data-setting="SONARR_TV_QUALITY_PROFILE_ID" data-manager-option="qualityProfile" list="sonarr-profiles" type="text" autocomplete="off" placeholder="Use default if blank">
+                        </label>
+                    </div>
+                    <div class="settings-field-row">
+                        <label>Anime root folder
+                            <input data-setting="SONARR_ANIME_ROOT_FOLDER" data-manager-option="rootFolder" list="sonarr-roots" type="text" autocomplete="off" placeholder="Use default if blank">
+                        </label>
+                        <label>Anime quality profile ID
+                            <input data-setting="SONARR_ANIME_QUALITY_PROFILE_ID" data-manager-option="qualityProfile" list="sonarr-profiles" type="text" autocomplete="off" placeholder="Use default if blank">
+                        </label>
+                    </div>
+                </details>
+                <button class="refresh-button settings-test" type="button" data-test="sonarr">Test Sonarr</button>
+                <p class="settings-result" data-result="sonarr" role="status"></p>
+            </section>
+
+            <section class="settings-group">
+                <h3>Torrent client <span class="optional-label">Optional</span></h3>
+                <label>Client software
+                    <select data-setting="TORRENT_CLIENT">
+                        <option value="">Not connected</option>
+                        <option value="qbittorrent">qBittorrent</option>
+                        <option value="transmission">Transmission</option>
+                        <option value="deluge">Deluge</option>
+                        <option value="bittorrent">BitTorrent / µTorrent Classic</option>
+                    </select>
+                </label>
+                <label>Web UI URL
+                    <input data-setting="TORRENT_URL" type="url" autocomplete="url" placeholder="For example: http://localhost:8080">
+                </label>
+                <div class="settings-field-row">
+                    <label>Username <span class="optional-label">qBittorrent/Transmission</span>
+                        <input data-setting="TORRENT_USERNAME" type="text" autocomplete="username">
+                    </label>
+                    <label>Password <span class="optional-label">Required for qBittorrent/Deluge/BitTorrent</span>
+                        <input data-setting="TORRENT_PASSWORD" type="password" autocomplete="new-password" data-secret>
+                    </label>
+                </div>
+                <p class="settings-help">Enable the client's Web UI or RPC access. Transmission can leave the username and password blank if authentication is disabled. BitTorrent / µTorrent must be the Classic desktop client's Web UI.</p>
+                <button class="refresh-button settings-test" type="button" data-test="torrent">Test connection</button>
+                <p class="settings-result" data-result="torrent" role="status"></p>
+            </section>
+
+            <p id="settings-message" class="settings-result" role="status" aria-live="polite"></p>
+            <div class="settings-actions">
+                <button id="register-command" class="refresh-button" type="button">Register Discord commands</button>
+                <button class="refresh-button settings-save" type="submit">Save settings</button>
+            </div>
+            </div>
+        </form>
+    </dialog>
+</body>
+</html>
